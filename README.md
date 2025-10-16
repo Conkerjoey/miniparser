@@ -12,3 +12,26 @@ Key Features:
 🔒 Safe Execution: Provides a secure way to evaluate user-defined logic.
 
 Perfect for configuration files, simple rule engines, or dynamic calculations.
+
+# Supported Syntax
+### Values
+- Decimal
+- Octal
+- Hexadecimal
+- Binary
+### Operators
+The current supported operators are:
+- addition (+)
+- subtraction (-)
+- multiplication (*)
+- division (/)
+- exponent (^)
+- modulo (%)
+### Variables
+Variables name are supported. The current standard is any letters and the '_' character.
+
+For example:
+- x
+- _abc
+- x_x
+- ABC
