@@ -34,24 +34,8 @@ class mpElement:
     def format(self):
         pass
 
-class mpBinary(mpElement):
-    def __init__(self, lhs: mpElement, rhs: mpElement, op: mpOperator):
-        self.lhs = lhs
-        self.rhs = rhs
-        self.op = op
-        self.evaluable = self.lhs.evaluable and self.rhs.evaluable
-
-    def evaluate(self):
-        return 
-    
-    def negate(self):
-        return 
-    
-    def format(self):
-        return 
-
 class mpNumber(mpElement):
-    def __init__(self, value: float, format: str):
+    def __init__(self, value: float, format: mpNumberFormat):
         self.val = 0
         self.mp_format = format
 
@@ -77,6 +61,78 @@ class mpNumber(mpElement):
             return bin(self.val)
         if mp_format == mpNumberFormat.OCTAL:
             return oct(self.val)
+
+class mpBinary(mpElement):
+    def __init__(self, lhs: mpElement, rhs: mpElement, op: mpOperator):
+        self.lhs = lhs
+        self.rhs = rhs
+        self.op = op
+        self.evaluable = self.lhs.evaluable and self.rhs.evaluable
+
+    def evaluate(self):
+        self.lhs = self.lhs.evaluate()
+        self.rhs = self.rhs.evaluate()
+
+        if self.lhs is None:
+            if self.op == mpOperator.ADDITION:
+                return self.rhs
+            if self.op == mpOperator.SUBTRACTION:
+                return mpUnary(self.rhs, mpUnaryOperator.MINUS)
+            if self.op == mpOperator.MULTIPLICATION or self.op == mpOperator.DIVISION:
+                return mpNumber(0, mpNumberFormat.DECIMAL)
+        if self.rhs is None:
+            if self.op == mpOperator.ADDITION:
+                return self.lhs
+            if self.op == mpOperator.SUBTRACTION:
+                return mpUnary(self.lhs, mpUnaryOperator.MINUS)
+            if self.op == mpOperator.MULTIPLICATION or self.op == mpOperator.DIVISION:
+                return mpNumber(0, mpNumberFormat.DECIMAL)
+    
+    def negate(self):
+        return 
+    
+    def format(self):
+        if isinstance(self.rhs, mpUnary):
+            if self.op == mpOperator.ADDITION:
+                return "(" + self.lhs.format() + "+" + self.rhs.format() + ")"
+            if self.op == mpOperator.SUBTRACTION:
+                return "(" + self.lhs.format() + "-" + self.rhs.format() + ")"
+        if isinstance(self.rhs, mpNumber):
+            if self.op == mpOperator.ADDITION and self.rhs.value() < 0:
+                return "(" + self.lhs.format() + "-" + self.rhs.format() + ")"
+        return "(" + self.lhs.format() + self.op2str(self.op) + self.rhs.format() + ")"
+    
+    def applyOperator(self, lhs: mpNumber, rhs: mpNumber, op: mpOperator):
+        if op == mpOperator.ADDITION:
+            return mpNumber(lhs.value() + rhs.value(), mpNumberFormat.DECIMAL)
+        if op == mpOperator.SUBTRACTION:
+            return mpNumber(lhs.value() - rhs.value(), mpNumberFormat.DECIMAL)
+        if op == mpOperator.MULTIPLICATION:
+            return mpNumber(lhs.value() * rhs.value(), mpNumberFormat.DECIMAL)
+        if op == mpOperator.DIVISION:
+            return mpNumber(lhs.value() / rhs.value(), mpNumberFormat.DECIMAL)
+        if op == mpOperator.EXPONENT:
+            return mpNumber(pow(lhs.value(), rhs.value()), mpNumberFormat.DECIMAL)
+        if op == mpOperator.MODULO:
+            return mpNumber(lhs.value() % rhs.value(), mpNumberFormat.DECIMAL)
+        raise NotImplementedError("This operator is not implemented.")
+    
+    def op2str(self, op: mpOperator):
+        if op == mpOperator.NOP:
+            return ""
+        if op == mpOperator.ADDITION:
+            return "+"
+        if op == mpOperator.SUBTRACTION:
+            return "-"
+        if op == mpOperator.MULTIPLICATION:
+            return "*"
+        if op == mpOperator.DIVISION:
+            return "/"
+        if op == mpOperator.EXPONENT:
+            return "^"
+        if op == mpOperator.MODULO:
+            return "%"
+        raise NotImplementedError("This operator is not implemented.")
 
 class mpPriority(mpElement):
     def __init__(self, element: mpElement):
